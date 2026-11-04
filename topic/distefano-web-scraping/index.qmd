@@ -229,20 +229,109 @@ df[["title", "price_gbp", "rating", "availability"]].head(3)
 - `rating` and `availability` are categorical variables.
 - Each row represents one book from the catalog.
 
+## Visualize the book prices
+
+```{python}
+#| label: fig-book-prices
+#| echo: false
+#| fig-cap: "Prices of 20 books from the first catalog page"
+#| fig-align: center
+#| out-width: "65%"
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(7, 2.6))
+ax.hist(df["price_gbp"], bins=6, edgecolor="black")
+ax.set(
+    xlabel="Book price (£)",
+    ylabel="Number of books"
+)
+plt.show()
+```
+
+**Interpretation:** Prices are concentrated near both ends of the
+observed range, with fewer books in the middle.
+
+These are demonstration prices, not representative market data.
+
 ## What about multiple pages?
+
+The catalog contains more books than can fit on one page.
+
+- Each catalog page displays up to **20 books**.
+- The full catalog contains **1,000 books across 50 pages**.
+- To collect everything, we would repeat the process for each page.
+
+The general workflow stays the same:
+
+**Request page → Parse HTML → Extract books → Add records**
+
+Pagination allows us to scale beyond the first 20 books.
+
 
 # Limitations and Responsible Use
 
 ## When scraping becomes difficult
 
+Web scraping can be fragile because websites change over time.
+
+- **Changing HTML:** Updated tags or classes can break selectors.
+- **Dynamic content:** JavaScript may load data after the initial request.
+- **Missing data:** Pages may contain incomplete information.
+- **Reproducibility:** Websites can change or become unavailable.
+
 ## Scrape responsibly
+
+Before collecting data from a website:
+
+- **Check site policies:** Review terms of use and `robots.txt`.
+- **Limit requests:** Avoid unnecessary traffic or excessive request rates.
+- **Respect privacy:** Do not collect or expose sensitive personal data.
+- **Prefer APIs:** Use an official API when a suitable one is available.
+
+**Just because data are visible does not mean we should collect them.**
 
 # Takeaways
 
 ## Three things to remember
 
+1. **Web scraping turns webpage content into structured data.**
+   Python can retrieve HTML and extract useful information.
+
+2. **Structured data can be analyzed with familiar tools.**
+   We used pandas and Matplotlib to explore book prices.
+
+3. **Scraped data are not automatically reliable.**
+   Websites change, and extracted values may be incomplete.
+
+**A successful request does not guarantee good data.**
+
+
 # Sources
+
+## Sources
+
+- [Books to Scrape](https://books.toscrape.com/)
+  - Demonstration website and book catalog used in our example.
+
+- [Requests documentation](https://requests.readthedocs.io/en/latest/)
+  - HTTP requests, response handling, and timeouts.
+
+- [Beautiful Soup documentation](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)
+  - HTML parsing, element selection, and data extraction.
 
 ## Further readings
 
+- [Quarto presentations](https://quarto.org/docs/presentations/)
+  - Creating reproducible presentations with Quarto.
+
+- [Beautiful Soup: CSS selectors](https://www.crummy.com/software/BeautifulSoup/bs4/doc/#css-selectors-through-the-css-property)
+  - More advanced methods for locating HTML elements.
+
+- [Requests: Quickstart](https://requests.readthedocs.io/en/latest/user/quickstart/)
+  - Additional examples of HTTP requests and response handling.
+
 # AI Use Disclosure
+
+ChatGPT was used to assist with research and organization,
+troubleshooting rendering issues,
+and a final review of the slides for clarity.
