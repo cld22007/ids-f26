@@ -1,0 +1,248 @@
+---
+title: "Web Scraping with Python"
+subtitle: "Introduction to Data Science | Fall 2026"
+author: "Cristian Distefano"
+format:
+  revealjs:
+    slide-number: true
+    preview-links: auto
+jupyter: python3
+---
+
+
+# From Web Pages to Data
+
+## What if the data are only on a webpage?
+
+Suppose we want to compare book prices across an online catalog.
+
+- We can see the titles and prices in our browser.
+- The information is not provided as a downloadable dataset.
+- Copying each value manually would be slow and error-prone.
+
+**Can Python collect this information automatically?**
+
+## What is web scraping?
+
+Web scraping is the process of extracting information from webpages
+and converting it into data that can be stored or analyzed.
+
+- **Input:** A webpage containing information we want.
+- **Process:** Request the page and extract relevant elements.
+- **Output:** Structured data, such as a pandas DataFrame.
+
+## Scraping versus APIs
+
+| Web scraping | API |
+|---|---|
+| Extracts information from webpages | Requests structured data |
+| Often requires parsing HTML | Often returns JSON |
+| Can break when page layouts change | Uses a documented interface |
+
+**When a suitable API is available, it is usually the better choice.**
+
+
+# How Web Scraping Works
+
+## A small HTML example
+
+Webpages are built from HTML elements that describe their content.
+
+```{.html}
+<article class="book">
+  <h3>Example Book</h3>
+  <p class="price">£19.99</p>
+</article>
+```
+
+- **Tags** (`article`, `h3`, `p`) describe elements.
+- **Classes** (`book`, `price`) help identify specific elements.
+- **Text** contains the information we want to extract.
+
+## The scraping workflow
+
+1. **Request:** Download the webpage's HTML.
+2. **Parse:** Turn the HTML into a searchable structure.
+3. **Extract:** Locate elements and collect their values.
+4. **Organize:** Store the results in a pandas DataFrame.
+
+**Goal:** Turn information on a webpage into structured data.
+
+
+# A Reproducible Example
+
+## Books to Scrape
+
+We will use [Books to Scrape](https://books.toscrape.com/), a demo
+website designed for practicing web scraping.
+
+Our goal is to collect information about books from its catalog:
+
+- **Title:** Name of the book.
+- **Price:** Listed price in British pounds.
+- **Rating:** Star rating shown on the webpage.
+- **Availability:** Whether the book is listed as in stock.
+
+We will organize these values into a pandas DataFrame.
+
+
+## Request the page
+
+Python's `requests` package lets us retrieve a webpage using HTTP.
+
+```{python}
+#| echo: true
+import requests
+
+url = "https://books.toscrape.com/"
+response = requests.get(url, timeout=10)
+response.raise_for_status()
+response.encoding = "utf-8"
+
+print("HTTP status:", response.status_code)
+```
+
+- `requests.get()` sends an HTTP GET request.
+- `timeout=10` prevents the request from waiting forever.
+- `raise_for_status()` raises an error for unsuccessful HTTP responses.
+
+## Parse the HTML
+
+The response contains HTML, but we need a way to find specific elements.
+
+```{python}
+#| echo: true
+from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(response.text, "html.parser")
+
+print("Page title:", soup.title.get_text(strip=True))
+```
+
+BeautifulSoup turns the HTML into a searchable structure.
+
+- `response.text` contains the downloaded HTML.
+- `"html.parser"` tells BeautifulSoup how to parse it.
+- `soup.title` finds the page's `<title>` element.
+
+
+## Extract one book
+
+Each book in the catalog is contained in an `article` element
+with the class `product_pod`.
+
+```{python}
+#| echo: true
+book = soup.select_one("article.product_pod")
+
+title = book.select_one("h3 a")["title"]
+price = book.select_one(".price_color").get_text(strip=True)
+
+print("Title:", title)
+print("Price:", price)
+```
+
+- `select_one()` finds the first matching HTML element.
+- `article.product_pod` identifies a book listing.
+- `h3 a` and `.price_color` extract its title and price.
+
+
+## Extract all books
+
+`select()` returns all matching elements instead of just the first.
+
+```{python}
+#| echo: true
+books = soup.select("article.product_pod")
+
+print("Books found:", len(books))
+
+for book in books[:3]:
+    title = book.select_one("h3 a")["title"]
+    price = book.select_one(".price_color").get_text(strip=True)
+    print(f"{title}: {price}")
+```
+
+We found **20 books** and displayed the first three.
+
+## Collect book information
+
+For each book, we extract its fields and save them as a record.
+
+```python
+for book in books:
+    title = book.select_one("h3 a")["title"]
+    price = book.select_one(".price_color").get_text(
+        strip=True
+    )
+    rating = book.select_one("p.star-rating")["class"][-1]
+    # Extract availability and add the record to our list.
+```
+
+The same process runs for all 20 books on the page.
+
+## Build a DataFrame
+
+We can store each book's information as a dictionary.
+
+```{python}
+#| echo: false
+import pandas as pd
+
+records = []
+
+for book in books:
+    title = book.select_one("h3 a")["title"]
+    price_text = book.select_one(".price_color").get_text(strip=True)
+    rating = book.select_one("p.star-rating")["class"][-1]
+    availability = book.select_one(".availability").get_text(
+        strip=True
+    )
+
+    records.append({
+        "title": title,
+        "price_gbp": float(price_text.replace("£", "")),
+        "rating": rating,
+        "availability": availability,
+    })
+```
+
+```{python}
+#| echo: true
+df = pd.DataFrame(records)
+
+print("Shape:", df.shape)
+```
+
+Each dictionary becomes a row, and each field becomes a column.
+
+## Explore the scraped data
+
+Our webpage is now a table with 20 rows and four columns.
+
+```{python}
+#| echo: true
+df[["title", "price_gbp", "rating", "availability"]].head(3)
+```
+
+- `price_gbp` is numeric and ready for analysis.
+- `rating` and `availability` are categorical variables.
+- Each row represents one book from the catalog.
+
+## What about multiple pages?
+
+# Limitations and Responsible Use
+
+## When scraping becomes difficult
+
+## Scrape responsibly
+
+# Takeaways
+
+## Three things to remember
+
+# Sources
+
+## Further readings
+
+# AI Use Disclosure
